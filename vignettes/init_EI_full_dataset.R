@@ -3,8 +3,9 @@
 # Setups ------------------------------------------------------------------
 
 # Setuping the working environment.
-packs <- c("plyr", "dplyr", "tidyr", "stringr", "data.table", "ggplot2")
-lapply(packs[!packs %in% installed.packages()[,1]], 
+packs <-
+  c("plyr", "dplyr", "tidyr", "stringr", "data.table", "ggplot2")
+lapply(packs[!packs %in% installed.packages()[, 1]],
        install.packages,
        dependencies = "Depends")
 lapply(packs, require, character.only = TRUE)
@@ -23,16 +24,16 @@ plyr::l_ply(paste0("R/", list.files("R/", "*.R")), source)
 # Loading data ------------------------------------------------------------
 
 
-# Emissions intensity data 
-EI <- 
-  read.fs.bulk("data_raw/Environment_Emissions_intensities_E_All_Data_(Normalized).csv") 
+# Emissions intensity data
+EI <-
+  read.fs.bulk("data_raw/Environment_Emissions_intensities_E_All_Data_(Normalized).csv")
 
-# Crop produciton data 
-CR <- 
+# Crop produciton data
+CR <-
   read.fs.bulk("data_raw/Production_Crops_E_All_Data_(Normalized).csv")
 
 # Live_animals Data
-LA <- 
+LA <-
   read.fs.bulk("data_raw/Production_LivestockPrimary_E_All_Data_(Normalized).csv")
 
 # Cleaning crops production data
@@ -42,14 +43,14 @@ LA <-
 #   by substracting rice from cereals.
 CR_sample <-
   CR %>%
-  select(-Flag, -ItemName, -ElementName, -Unit) %>%
+  select(-Flag,-ItemName,-ElementName,-Unit) %>%
   filter(ItemCode %in% c(unique(EI$ItemCode), 1717)) %>%
   spread(ItemCode, Value) %>%
   
   # Calculating item ceeals ecluding rice
   mutate(`1718` = `1717` - replace(`27`, is.na(`27`), 0)) %>%
   gather(ItemCode, Value, 5:length(.)) %>%
-  mutate(ItemCode = as.numeric(ItemCode)) %>% 
+  mutate(ItemCode = as.numeric(ItemCode)) %>%
   spread(ElementCode, Value) %>%
   select(-AreaName) %>%
   
@@ -61,7 +62,7 @@ CR_sample <-
   # gather(ElementCode, Value, 4:length(.)) %>%
   
   # Filtering only yields
-  filter(ItemCode != 1717, !is.na(`5419`)) %>% 
+  filter(ItemCode != 1717,!is.na(`5419`)) %>%
   select(AreaCode,  Year, ItemCode, `5419`)
 
 
@@ -70,35 +71,39 @@ CR_sample <-
 
 LA_sampl <-
   LA %>%
-  select(-Flag, -ItemName, -ElementName, -Unit) %>%
+  select(-Flag,-ItemName,-ElementName,-Unit) %>%
   filter(ItemCode %in% c(unique(EI$ItemCode))) %>%
   
   # Aggregating Annexone and not annex one countries
-  spread(ElementCode, Value) %>% 
-  select(-AreaName) %>% 
-  bind_rows(agg_fs_regions(.) %>% filter(AreaCode %in% c(5848, 5849, 5873))) %>% 
-  # join_fs_names() %>% 
+  spread(ElementCode, Value) %>%
+  select(-AreaName) %>%
+  bind_rows(agg_fs_regions(.) %>% filter(AreaCode %in% c(5848, 5849, 5873))) %>%
+  # join_fs_names() %>%
   
   # Recalculating Yields
-  mutate(`5410` = `5510` / `5313` * 10000,
-         `5417` = `5510` / `5320` * 10000,
-         `5424` = `5510` / `5321` * 10000,
-         `5420` = `5510` / `5318` * 10000) %>% 
-    
-  mutate(`5410` =  replace(`5410`, is.infinite(`5410`), 0),
-         `5417` =  replace(`5417`, is.infinite(`5417`), 0),
-         `5424` =  replace(`5424`, is.infinite(`5424`), 0),
-         `5420` =  replace(`5420`, is.infinite(`5420`), 0)) %>% 
+  mutate(
+    `5410` = `5510` / `5313` * 10000,
+    `5417` = `5510` / `5320` * 10000,
+    `5424` = `5510` / `5321` * 10000,
+    `5420` = `5510` / `5318` * 10000
+  ) %>%
+  
+  mutate(
+    `5410` =  replace(`5410`, is.infinite(`5410`), 0),
+    `5417` =  replace(`5417`, is.infinite(`5417`), 0),
+    `5424` =  replace(`5424`, is.infinite(`5424`), 0),
+    `5420` =  replace(`5420`, is.infinite(`5420`), 0)
+  ) %>%
   
   # Aggregatig=ng non nnex 1countries
-  # gather(ElementCode, Value, 4:length(.)) %>% 
-  # filter(!is.na(Value)) %>% 
+  # gather(ElementCode, Value, 4:length(.)) %>%
+  # filter(!is.na(Value)) %>%
   
   # Filtering only element codeswhich we need
   select(AreaCode, ItemCode, Year, `5424`, `5410`, `5420`, `5417`)
 
 # Combining emissions intencity data with the data from other domains
-EI_full <-
+EI_full_long <-
   EI %>%
   select(AreaCode, ElementCode, ItemCode, Year, Value) %>%
   spread(ElementCode, Value) %>%
@@ -111,7 +116,6 @@ EI_full <-
       left_join(LA_sampl,  by = c("AreaCode", "ItemCode", "Year")) %>%
       filter(!ItemCode %in% c(1718, 27))
   ) %>%
-  join_fs_names() %>%
   
   # Correcting units of yields from whatever it is to kg per something
   mutate(
@@ -129,15 +133,25 @@ EI_full <-
     `Yield/Carcass Weight, kg/head` = `5424`,
     `Yield, kg/head` = `5410`,
     `Yield, t/head` = `5420`,
-    `Yield, t/head` = `5417`
-  )
+    `Yield, t/1head` = `5417`
+  ) %>%
+  gather(ElementName, Value, 4:length(.)) %>%
+  mutate(Unit = trimws(str_extract(ElementName, "(?<=,).*")),
+         ElementName = trimws(str_extract(ElementName, ".+?(?=,)"))) %>%
+  # mutate(Unit = ifelse(Unit == "t/head1", "t/head", Unit)) %>%
+  join_fs_names() %>%
+  filter(!is.na(Value))
 
+EI_full_wide <-
+  EI_full_long %>%
+  mutate(ElementName = str_c(ElementName, ", ", Unit)) %>%
+  select(-Unit) %>%
+  spread(ElementName, Value)
 
 # Saving ------------------------------------------------------------------
 
 # Saving all Emissions intencities data
-save("EI_full", file = "data/EI_full.RData")
+save("EI_full", "EI_full_wide", file = "data/EI_full.RData")
 
 
-  
-  
+
