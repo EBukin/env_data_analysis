@@ -151,7 +151,7 @@ EI_full_wide <-
 # Saving ------------------------------------------------------------------
 
 # Saving all Emissions intencities data
-save("EI_full", "EI_full_wide", file = "data/EI_full.RData")
+save("EI_full_long", "EI_full_wide", file = "data/EI_full.RData")
 
 
 
