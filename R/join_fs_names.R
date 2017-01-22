@@ -24,7 +24,7 @@ join_fs_names <-
     # Ensuring the codes in the original dataframe are defined as integers
     
     # Carrying checks and, if necessary, cleaning the data frame
-    if ("Unit" %in% colnames(df))
+    if ("Unit" %in% colnames(df) & "ElementCode" %in% colnames(df))
     {
       df <- df %>% select(-Unit)
     }
@@ -39,7 +39,7 @@ join_fs_names <-
       df <- df %>% select(-ItemName)
     }
     
-    if ("ElementName" %in% colnames(df))
+    if ("ElementName" %in% colnames(df) & "ElementCode" %in% colnames(df) )
     {
       df <- df %>% select(-ElementName)
     }
