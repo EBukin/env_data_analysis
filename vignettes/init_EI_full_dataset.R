@@ -82,22 +82,23 @@ LA_sampl <-
   
   # Recalculating Yields
   mutate(
-    `5410` = `5510` / `5313` * 10000,
-    `5417` = `5510` / `5320` * 10000,
-    `5424` = `5510` / `5321` * 10000,
-    `5420` = `5510` / `5318` * 10000
+    `5410` = `5510` / `5313` ,
+    `5417` = `5510` / `5320` ,
+    `5424` = `5510` / `5321` ,
+    `5420` = `5510` / `5318` 
   ) %>%
   
   mutate(
-    `5410` =  replace(`5410`, is.infinite(`5410`), 0),
-    `5417` =  replace(`5417`, is.infinite(`5417`), 0),
-    `5424` =  replace(`5424`, is.infinite(`5424`), 0),
-    `5420` =  replace(`5420`, is.infinite(`5420`), 0)
+    `5410` =  replace(`5410`, is.infinite(`5410`), NA),
+    `5417` =  replace(`5417`, is.infinite(`5417`), NA),
+    `5424` =  replace(`5424`, is.infinite(`5424`), NA),
+    `5420` =  replace(`5420`, is.infinite(`5420`), NA)
   ) %>%
   
   # Aggregatig=ng non nnex 1countries
   # gather(ElementCode, Value, 4:length(.)) %>%
   # filter(!is.na(Value)) %>%
+  # filter(ItemCode == 882)
   
   # Filtering only element codeswhich we need
   select(AreaCode, ItemCode, Year, `5424`, `5410`, `5420`, `5417`)
@@ -120,10 +121,10 @@ EI_full_long <-
   # Correcting units of yields from whatever it is to kg per something
   mutate(
     `5419` = `5419`,
-    `5424` = `5424` / 10000,
-    `5410` = `5410` / 10000,
-    `5420` = `5420` / 10000,
-    `5417` = `5417` / 10000
+    `5424` = `5424` ,
+    `5410` = `5410` ,
+    `5420` = `5420` ,
+    `5417` = `5417` 
   ) %>%
   dplyr::rename(
     `Production, t` = `5510`,
