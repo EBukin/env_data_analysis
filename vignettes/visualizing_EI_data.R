@@ -5,10 +5,10 @@
 
 # Setuping the working environment. ---------------------------------------
 
-packs <- c("plyr", "dplyr", "tidyr", "stringr", "ggplot2")
+packs <- c("plyr", "dplyr", "tidyr", "stringr", "ggplot2", "svglite", "gdtools")
 lapply(packs[!packs %in% installed.packages()[,1]], 
        install.packages,
-       dependencies = "Depends")
+       dependencies = c("Depends", "Imports"))
 lapply(packs, require, character.only = TRUE)
 
 
@@ -106,7 +106,7 @@ EI_full_wide %>%
   geom_jitter() +
   facet_wrap( ~ ItemName, scales = "free") +
   theme(legend.position = "bottom") +
-  xlab("Productivity (kg milk/Cow/Year)") +
+  xlab("Productivity (tons milk/cow/year)") +
   ylab("GHG Intensity (kg CO2eq/kg milk)")+
   ggtitle("Cross-sectional view - pooling all countries - 2014")
 
@@ -137,6 +137,31 @@ EI_full_wide %>%
 
 ggsave("vignettes/Egg_press.png", width = 15, height = 13, units = "cm", dpi = 150)
 ggsave("vignettes/Egg_press.svg", width = 15, height = 13, units = "cm", dpi = 150)
+
+
+# Plot for meat
+EI_full_wide %>%
+  filter(AreaCode < 5000, !is.na(GroupCodeAnnex), Year == 2014, ItemCode %in% c(867)) %>%
+  filter(!cook_ei) %>% 
+  ggplot(
+    aes(
+      `Yield`,
+      `Emissions intensity`,
+      group = RegionName,
+      fill = RegionName,
+      colour = RegionName,
+      shape = RegionName
+    )
+  ) +
+  geom_jitter() +
+  facet_wrap( ~ ItemName, scales = "free") +
+  theme(legend.position = "bottom") +
+  xlab("Productivity (tons carcass weight/cow/year)") +
+  ylab("GHG Intensity (kg CO2eq/tons carcass weight)")+
+  ggtitle("Cross-sectional view - pooling all countries - 2014")
+
+ggsave("vignettes/Meat_press.png", width = 15, height = 13, units = "cm", dpi = 150)
+ggsave("vignettes/Meat_press.svg", width = 15, height = 13, units = "cm", dpi = 150)
 
 
 
