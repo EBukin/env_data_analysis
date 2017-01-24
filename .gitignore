@@ -20,6 +20,8 @@
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
+vignettes/*.png
+vignettes/*.svg
 vignettes/other/
 
 /data_raw/
